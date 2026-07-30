@@ -374,21 +374,35 @@ function Lobby({ onEnter }) {
 
       <img
         src={frontDeskImg}
-        alt="Reception"
+        alt=""
+        aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          filter: "brightness(0.55) saturate(1.05)",
+          filter: "brightness(0.4) saturate(1.05) blur(28px)",
+          transform: "scale(1.15)",
+        }}
+      />
+      <img
+        src={frontDeskImg}
+        alt="Reception"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          filter: "brightness(0.75) saturate(1.15) contrast(1.05)",
         }}
       />
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(180deg, rgba(5,4,3,0.75) 0%, rgba(5,4,3,0.15) 30%, rgba(5,4,3,0.15) 65%, rgba(5,4,3,0.9) 100%)",
+          background: "linear-gradient(180deg, rgba(5,4,3,0.65) 0%, rgba(5,4,3,0.05) 30%, rgba(5,4,3,0.05) 65%, rgba(5,4,3,0.85) 100%)",
         }}
       />
 
