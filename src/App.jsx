@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import hologramImg from "../7.6.18-FOM.jpg";
+import frontDeskImg from "../front desk.jpg";
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
@@ -353,61 +354,49 @@ function HologramBody() {
 
 
 function Lobby({ onEnter }) {
-  const buildings = [
-    { x: 0, w: 30, h: 90 }, { x: 32, w: 22, h: 140 }, { x: 56, w: 28, h: 110 },
-    { x: 86, w: 20, h: 170 }, { x: 108, w: 34, h: 130 }, { x: 144, w: 24, h: 200 },
-    { x: 170, w: 30, h: 150 }, { x: 202, w: 22, h: 115 }, { x: 226, w: 32, h: 175 },
-    { x: 260, w: 24, h: 135 }, { x: 286, w: 28, h: 95 }, { x: 316, w: 20, h: 160 },
-    { x: 338, w: 26, h: 120 },
-  ];
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "radial-gradient(ellipse at 50% 0%, #16130C 0%, #0A0806 45%, #050403 100%)",
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
-        padding: "44px 20px 40px",
+        justifyContent: "space-between",
         boxSizing: "border-box",
         fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-        position: "relative",
         overflow: "hidden",
       }}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-        @keyframes windowTwinkle {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        @keyframes chandelierGlow {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.85; }
-        }
       `}</style>
 
-      {/* chandelier glow */}
+      <img
+        src={frontDeskImg}
+        alt="Reception"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          filter: "brightness(0.55) saturate(1.05)",
+        }}
+      />
       <div
         style={{
           position: "absolute",
-          top: -60,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: 320,
-          height: 200,
-          background: "radial-gradient(ellipse, rgba(212,175,55,0.22) 0%, transparent 70%)",
-          animation: "chandelierGlow 4s ease-in-out infinite",
-          pointerEvents: "none",
+          inset: 0,
+          background: "linear-gradient(180deg, rgba(5,4,3,0.75) 0%, rgba(5,4,3,0.15) 30%, rgba(5,4,3,0.15) 65%, rgba(5,4,3,0.9) 100%)",
         }}
       />
 
-      <div style={{ textAlign: "center", position: "relative", zIndex: 2 }}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.3em", color: "#8A8478" }}>
+      <div style={{ textAlign: "center", position: "relative", zIndex: 2, paddingTop: 48 }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.3em", color: "#C9C4B8" }}>
           THE
         </div>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 46, fontWeight: 600, color: "#F5F3EC", letterSpacing: "0.04em", marginTop: 2 }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 46, fontWeight: 600, color: "#FFFFFF", letterSpacing: "0.04em", marginTop: 2, textShadow: "0 2px 20px rgba(0,0,0,0.6)" }}>
           MARSHALL
         </div>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.35em", color: "#D4AF37", marginTop: 4 }}>
@@ -415,116 +404,22 @@ function Lobby({ onEnter }) {
         </div>
       </div>
 
-      {/* Window with skyline view, glass mullions, warm wood frame */}
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: 420,
-          height: 220,
-          marginTop: 34,
-          padding: 10,
-          background: "linear-gradient(180deg, #241C10 0%, #14100A 100%)",
-          border: "1px solid #4A3F26",
-          borderRadius: 6,
-          boxSizing: "border-box",
-        }}
-      >
-        <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", borderRadius: 2, background: "linear-gradient(180deg, #0C1826 0%, #060504 100%)" }}>
-          <svg width="100%" height="100%" viewBox="0 0 362 200" preserveAspectRatio="xMidYMax slice">
-            {buildings.map((b, i) => (
-              <g key={i}>
-                <rect x={b.x} y={200 - b.h} width={b.w} height={b.h} fill="#101012" stroke="#221E14" strokeWidth="0.5" />
-                {Array.from({ length: Math.floor(b.h / 16) }).map((_, r) =>
-                  Array.from({ length: Math.max(1, Math.floor(b.w / 9)) }).map((_, c) => {
-                    const lit = (i * 7 + r * 3 + c) % 4 === 0;
-                    return lit ? (
-                      <rect
-                        key={r + "-" + c}
-                        x={b.x + 3 + c * 8}
-                        y={200 - b.h + 6 + r * 16}
-                        width={3.5}
-                        height={5}
-                        fill="#D4AF37"
-                        style={{ animation: `windowTwinkle ${3 + ((r + c) % 4)}s ease-in-out infinite`, animationDelay: `${(r + c) * 0.2}s` }}
-                      />
-                    ) : null;
-                  })
-                )}
-              </g>
-            ))}
-          </svg>
-          {/* window mullions */}
-          <div style={{ position: "absolute", top: 0, bottom: 0, left: "33%", width: 3, background: "#14100A" }} />
-          <div style={{ position: "absolute", top: 0, bottom: 0, left: "66%", width: 3, background: "#14100A" }} />
-          <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 3, background: "#14100A" }} />
-        </div>
-      </div>
-
-      {/* Marble floor with reception desk */}
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: 480,
-          marginTop: 0,
-          paddingTop: 40,
-        }}
-      >
-        {/* marble floor */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: -20,
-            left: "-10%",
-            right: "-10%",
-            height: 90,
-            background: "linear-gradient(180deg, #1C1912 0%, #0A0806 100%)",
-            transform: "perspective(300px) rotateX(55deg)",
-            transformOrigin: "top",
-            opacity: 0.6,
-          }}
-        />
-
-        {/* angled marble reception desk */}
-        <div
-          style={{
-            position: "relative",
-            zIndex: 2,
-            width: "100%",
-            height: 64,
-            background: "linear-gradient(115deg, #2A2620 0%, #16140F 55%, #0A0906 100%)",
-            border: "1px solid #4A4028",
-            borderTop: "2px solid #D4AF37",
-            clipPath: "polygon(0 100%, 3% 0, 97% 0, 100% 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 0 30px rgba(212,175,55,0.08)",
-          }}
-        >
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "#B8AE94" }}>
-            RECEPTION
-          </span>
-        </div>
-      </div>
-
       <button
         onClick={onEnter}
         style={{
-          marginTop: 34,
+          marginBottom: 48,
           position: "relative",
           zIndex: 2,
           background: "linear-gradient(180deg, #E8C468 0%, #D4AF37 100%)",
           color: "#0A0806",
           border: "none",
           borderRadius: 8,
-          padding: "13px 36px",
+          padding: "14px 40px",
           fontSize: 14,
           fontWeight: 700,
           letterSpacing: "0.04em",
           cursor: "pointer",
-          boxShadow: "0 4px 18px rgba(212,175,55,0.25)",
+          boxShadow: "0 4px 24px rgba(212,175,55,0.35)",
         }}
       >
         Enter Office
