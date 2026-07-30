@@ -81,13 +81,20 @@ const PLAN = [
   },
 ];
 
-const TABS = ["today", "daily tasks", "history"];
+const TABS = ["today", "health", "daily tasks", "history"];
 
 export default function MarshallHub() {
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState({});
   const [checked, setChecked] = useState({});
   const [dailyLog, setDailyLog] = useState({});
+  const [health, setHealth] = useState({});
+  const [healthDraft, setHealthDraft] = useState({ weight: "", note: "" });
+  const [macroGoals, setMacroGoals] = useState({ calories: "", protein: "", carbs: "", fat: "" });
+  const [foodLog, setFoodLog] = useState({});
+  const [foodDraft, setFoodDraft] = useState({ item: "", calories: "", protein: "", carbs: "", fat: "" });
+  const [peptideLog, setPeptideLog] = useState({});
+  const [peptideDraft, setPeptideDraft] = useState({ name: "", dose: "", note: "" });
   const [draft, setDraft] = useState("");
   const [view, setView] = useState("today");
   const [saveState, setSaveState] = useState("idle");
@@ -106,6 +113,22 @@ export default function MarshallHub() {
       try {
         const dl = await window.storage.get("roadmap:dailyLog");
         if (dl) setDailyLog(JSON.parse(dl.value));
+      } catch (err) {}
+      try {
+        const h = await window.storage.get("health:logs");
+        if (h) setHealth(JSON.parse(h.value));
+      } catch (err) {}
+      try {
+        const mg = await window.storage.get("health:macroGoals");
+        if (mg) setMacroGoals(JSON.parse(mg.value));
+      } catch (err) {}
+      try {
+        const fl = await window.storage.get("health:foodLog");
+        if (fl) setFoodLog(JSON.parse(fl.value));
+      } catch (err) {}
+      try {
+        const pl = await window.storage.get("health:peptideLog");
+        if (pl) setPeptideLog(JSON.parse(pl.value));
       } catch (err) {}
 
       if (Object.keys(loadedEntries).length === 0) {
@@ -176,6 +199,115 @@ export default function MarshallHub() {
     persistEntries(next);
     setDraft("");
   };
+
+  const saveHealth = async () => {
+    if (!healthDraft.weight.trim() && !healthDraft.note.trim()) return;
+    const key = todayKey();
+    const next = {
+      ...health,
+      [key]: {
+        weight: healthDraft.weight.trim() ? Number(healthDraft.weight.trim()) : null,
+        note: healthDraft.note.trim(),
+      },
+    };
+    setHealth(next);
+    try {
+      await window.storage.set("health:logs", JSON.stringify(next));
+    } catch (err) {}
+    setHealthDraft({ weight: "", note: "" });
+  };
+
+  const healthDates = Object.keys(health).sort().reverse();
+
+  const healthStreak = (() => {
+    let streak = 0;
+    let d = new Date();
+    while (true) {
+      const key = d.toISOString().slice(0, 10);
+      if (health[key]) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  })();
+
+  const saveMacroGoals = async (next) => {
+    setMacroGoals(next);
+    try {
+      await window.storage.set("health:macroGoals", JSON.stringify(next));
+    } catch (err) {}
+  };
+
+  const addFoodItem = async () => {
+    if (!foodDraft.item.trim()) return;
+    const key = todayKey();
+    const entry = {
+      item: foodDraft.item.trim(),
+      calories: Number(foodDraft.calories) || 0,
+      protein: Number(foodDraft.protein) || 0,
+      carbs: Number(foodDraft.carbs) || 0,
+      fat: Number(foodDraft.fat) || 0,
+    };
+    const next = { ...foodLog, [key]: [...(foodLog[key] || []), entry] };
+    setFoodLog(next);
+    try {
+      await window.storage.set("health:foodLog", JSON.stringify(next));
+    } catch (err) {}
+    setFoodDraft({ item: "", calories: "", protein: "", carbs: "", fat: "" });
+  };
+
+  const removeFoodItem = async (idx) => {
+    const key = todayKey();
+    const next = { ...foodLog, [key]: (foodLog[key] || []).filter((_, i) => i !== idx) };
+    setFoodLog(next);
+    try {
+      await window.storage.set("health:foodLog", JSON.stringify(next));
+    } catch (err) {}
+  };
+
+  const todayFood = foodLog[todayKey()] || [];
+  const foodTotals = todayFood.reduce(
+    (acc, f) => ({
+      calories: acc.calories + f.calories,
+      protein: acc.protein + f.protein,
+      carbs: acc.carbs + f.carbs,
+      fat: acc.fat + f.fat,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  const addPeptideDose = async () => {
+    if (!peptideDraft.name.trim()) return;
+    const key = todayKey();
+    const now = new Date();
+    const time = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    const entry = {
+      name: peptideDraft.name.trim(),
+      dose: peptideDraft.dose.trim(),
+      note: peptideDraft.note.trim(),
+      time,
+    };
+    const next = { ...peptideLog, [key]: [...(peptideLog[key] || []), entry] };
+    setPeptideLog(next);
+    try {
+      await window.storage.set("health:peptideLog", JSON.stringify(next));
+    } catch (err) {}
+    setPeptideDraft({ name: "", dose: "", note: "" });
+  };
+
+  const removePeptideDose = async (idx) => {
+    const key = todayKey();
+    const next = { ...peptideLog, [key]: (peptideLog[key] || []).filter((_, i) => i !== idx) };
+    setPeptideLog(next);
+    try {
+      await window.storage.set("health:peptideLog", JSON.stringify(next));
+    } catch (err) {}
+  };
+
+  const todayPeptides = peptideLog[todayKey()] || [];
 
   const entryDates = Object.keys(entries).sort().reverse();
   const historyDates = Array.from(new Set([...Object.keys(entries), ...Object.keys(dailyLog)])).sort().reverse();
@@ -320,6 +452,296 @@ export default function MarshallHub() {
               >
                 Save entry
               </button>
+            </div>
+          </div>
+        )}
+
+        {view === "health" && (
+          <div>
+            <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+              <div style={{ flex: 1, background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 14, textAlign: "center" }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#5FE8D5" }}>{healthStreak}</div>
+                <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
+                  DAY STREAK
+                </div>
+              </div>
+              <div style={{ flex: 1, background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 14, textAlign: "center" }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#5FE8D5" }}>
+                  {health[todayKey()] && health[todayKey()].weight ? health[todayKey()].weight : "—"}
+                </div>
+                <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
+                  TODAY'S WEIGHT
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16, marginBottom: 14 }}>
+              <div style={{ fontSize: 12, color: "#7C8CA0", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+              </div>
+              <input
+                type="number"
+                value={healthDraft.weight}
+                onChange={(e) => setHealthDraft({ ...healthDraft, weight: e.target.value })}
+                placeholder="Weight (optional)"
+                style={{
+                  width: "100%",
+                  background: "#05070B",
+                  border: "1px solid #182430",
+                  borderRadius: 8,
+                  color: "#E7EDF4",
+                  padding: 10,
+                  fontSize: 14,
+                  marginBottom: 10,
+                }}
+              />
+              <textarea
+                value={healthDraft.note}
+                onChange={(e) => setHealthDraft({ ...healthDraft, note: e.target.value })}
+                placeholder="Workout, habits, how the body feels..."
+                rows={4}
+                style={{
+                  width: "100%",
+                  background: "#05070B",
+                  border: "1px solid #182430",
+                  borderRadius: 8,
+                  color: "#E7EDF4",
+                  padding: 12,
+                  fontSize: 14,
+                  resize: "vertical",
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+                <button
+                  onClick={saveHealth}
+                  style={{
+                    background: "#5FE8D5",
+                    color: "#05070B",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "8px 18px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Log today
+                </button>
+              </div>
+            </div>
+
+            {healthDates.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                  PAST LOGS
+                </div>
+                {healthDates.map((d) => (
+                  <div key={d} style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: "#5FE8D5", fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>
+                      {new Date(d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                      {health[d].weight ? ` · ${health[d].weight}` : ""}
+                    </div>
+                    {health[d].note && (
+                      <div style={{ fontSize: 13, color: "#C7D2DC" }}>{health[d].note}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Macro goals */}
+            <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              DAILY MACRO GOALS
+            </div>
+            <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16, marginBottom: 20 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                {[
+                  { key: "calories", label: "Calories" },
+                  { key: "protein", label: "Protein (g)" },
+                  { key: "carbs", label: "Carbs (g)" },
+                  { key: "fat", label: "Fat (g)" },
+                ].map((f) => (
+                  <div key={f.key}>
+                    <div style={{ fontSize: 11, color: "#7C8CA0", marginBottom: 4 }}>{f.label}</div>
+                    <input
+                      type="number"
+                      value={macroGoals[f.key]}
+                      onChange={(e) => saveMacroGoals({ ...macroGoals, [f.key]: e.target.value })}
+                      placeholder="Set goal"
+                      style={{
+                        width: "100%",
+                        background: "#05070B",
+                        border: "1px solid #182430",
+                        borderRadius: 6,
+                        color: "#E7EDF4",
+                        padding: 8,
+                        fontSize: 13,
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              {macroGoals.calories && (
+                <div style={{ fontSize: 12, color: "#8FE0D3", marginTop: 4 }}>
+                  Today: {foodTotals.calories} / {macroGoals.calories} cal · {foodTotals.protein}
+                  {macroGoals.protein ? `/${macroGoals.protein}` : ""}g protein
+                </div>
+              )}
+            </div>
+
+            {/* Food log */}
+            <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              FOOD LOG — TODAY
+            </div>
+            <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16, marginBottom: 20 }}>
+              <input
+                value={foodDraft.item}
+                onChange={(e) => setFoodDraft({ ...foodDraft, item: e.target.value })}
+                placeholder="Food item"
+                style={{
+                  width: "100%",
+                  background: "#05070B",
+                  border: "1px solid #182430",
+                  borderRadius: 6,
+                  color: "#E7EDF4",
+                  padding: 8,
+                  fontSize: 13,
+                  marginBottom: 8,
+                }}
+              />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 10 }}>
+                {["calories", "protein", "carbs", "fat"].map((f) => (
+                  <input
+                    key={f}
+                    type="number"
+                    value={foodDraft[f]}
+                    onChange={(e) => setFoodDraft({ ...foodDraft, [f]: e.target.value })}
+                    placeholder={f === "calories" ? "cal" : f[0] + "g"}
+                    style={{
+                      background: "#05070B",
+                      border: "1px solid #182430",
+                      borderRadius: 6,
+                      color: "#E7EDF4",
+                      padding: 8,
+                      fontSize: 12,
+                    }}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={addFoodItem}
+                style={{
+                  background: "#5FE8D5",
+                  color: "#05070B",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 18px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  marginBottom: todayFood.length ? 12 : 0,
+                }}
+              >
+                Add item
+              </button>
+              {todayFood.map((f, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderTop: "1px solid #182430" }}>
+                  <span style={{ fontSize: 13, color: "#C7D2DC" }}>{f.item}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 11, color: "#7C8CA0", fontFamily: "'JetBrains Mono', monospace" }}>
+                      {f.calories} cal
+                    </span>
+                    <button
+                      onClick={() => removeFoodItem(i)}
+                      style={{ background: "none", border: "none", color: "#4A5A68", cursor: "pointer", fontSize: 15 }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Peptide log */}
+            <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+              PEPTIDE / DOSE LOG — TODAY
+            </div>
+            <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                <input
+                  value={peptideDraft.name}
+                  onChange={(e) => setPeptideDraft({ ...peptideDraft, name: e.target.value })}
+                  placeholder="Name"
+                  style={{
+                    background: "#05070B",
+                    border: "1px solid #182430",
+                    borderRadius: 6,
+                    color: "#E7EDF4",
+                    padding: 8,
+                    fontSize: 13,
+                  }}
+                />
+                <input
+                  value={peptideDraft.dose}
+                  onChange={(e) => setPeptideDraft({ ...peptideDraft, dose: e.target.value })}
+                  placeholder="Dose"
+                  style={{
+                    background: "#05070B",
+                    border: "1px solid #182430",
+                    borderRadius: 6,
+                    color: "#E7EDF4",
+                    padding: 8,
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+              <input
+                value={peptideDraft.note}
+                onChange={(e) => setPeptideDraft({ ...peptideDraft, note: e.target.value })}
+                placeholder="Note (optional)"
+                style={{
+                  width: "100%",
+                  background: "#05070B",
+                  border: "1px solid #182430",
+                  borderRadius: 6,
+                  color: "#E7EDF4",
+                  padding: 8,
+                  fontSize: 13,
+                  marginBottom: 10,
+                }}
+              />
+              <button
+                onClick={addPeptideDose}
+                style={{
+                  background: "#5FE8D5",
+                  color: "#05070B",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 18px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  marginBottom: todayPeptides.length ? 12 : 0,
+                }}
+              >
+                Log dose
+              </button>
+              {todayPeptides.map((p, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderTop: "1px solid #182430" }}>
+                  <span style={{ fontSize: 13, color: "#C7D2DC" }}>
+                    {p.name} {p.dose && `· ${p.dose}`}
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 11, color: "#7C8CA0", fontFamily: "'JetBrains Mono', monospace" }}>{p.time}</span>
+                    <button
+                      onClick={() => removePeptideDose(i)}
+                      style={{ background: "none", border: "none", color: "#4A5A68", cursor: "pointer", fontSize: 15 }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
