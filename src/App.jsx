@@ -81,7 +81,124 @@ const PLAN = [
   },
 ];
 
-const TABS = ["today", "health", "daily tasks", "history"];
+const TABS = ["daily log", "health", "daily tasks", "history"];
+
+const WEATHER_CODES = {
+  0: "Clear",
+  1: "Mostly clear",
+  2: "Partly cloudy",
+  3: "Overcast",
+  45: "Foggy",
+  48: "Foggy",
+  51: "Light drizzle",
+  53: "Drizzle",
+  55: "Heavy drizzle",
+  61: "Light rain",
+  63: "Rain",
+  65: "Heavy rain",
+  71: "Light snow",
+  73: "Snow",
+  75: "Heavy snow",
+  80: "Rain showers",
+  81: "Rain showers",
+  82: "Heavy showers",
+  95: "Thunderstorm",
+  96: "Thunderstorm",
+  99: "Thunderstorm",
+};
+
+function TodayWidget() {
+  const [now, setNow] = useState(new Date());
+  const [location, setLocation] = useState("Locating...");
+  const [temp, setTemp] = useState(null);
+  const [conditions, setConditions] = useState("");
+  const [tempUnit, setTempUnit] = useState("F");
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocation("Location unavailable");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const wRes = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&temperature_unit=fahrenheit`
+          );
+          const wData = await wRes.json();
+          if (wData.current_weather) {
+            setTemp(Math.round(wData.current_weather.temperature));
+            setConditions(WEATHER_CODES[wData.current_weather.weathercode] || "");
+          }
+        } catch (err) {}
+        try {
+          const gRes = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          );
+          const gData = await gRes.json();
+          const city =
+            gData.address?.city || gData.address?.town || gData.address?.village || gData.address?.county;
+          const state = gData.address?.state;
+          setLocation(city && state ? `${city}, ${state}` : city || "Current location");
+        } catch (err) {
+          setLocation("Current location");
+        }
+      },
+      () => setLocation("Location off")
+    );
+  }, []);
+
+  return (
+    <div
+      style={{
+        background: "linear-gradient(135deg, #0D1B2A 0%, #0A1420 100%)",
+        border: "1px solid #1E2C3A",
+        borderRadius: 16,
+        padding: "20px 22px",
+        marginBottom: 22,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: -40,
+          right: -40,
+          width: 140,
+          height: 140,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(95,232,213,0.14) 0%, transparent 70%)",
+        }}
+      />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative" }}>
+        <div>
+          <div style={{ fontSize: 13, color: "#8FA0AE", marginBottom: 2 }}>
+            {now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#F2F6F8", letterSpacing: "-0.02em" }}>
+            {now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+          </div>
+          <div style={{ fontSize: 12, color: "#5FE8D5", marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>
+            {location}
+          </div>
+        </div>
+        {temp !== null && (
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "#F2F6F8" }}>{temp}°{tempUnit}</div>
+            <div style={{ fontSize: 12, color: "#8FA0AE" }}>{conditions}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function MarshallHub() {
   const [loading, setLoading] = useState(true);
@@ -90,13 +207,16 @@ export default function MarshallHub() {
   const [dailyLog, setDailyLog] = useState({});
   const [health, setHealth] = useState({});
   const [healthDraft, setHealthDraft] = useState({ weight: "", note: "" });
-  const [macroGoals, setMacroGoals] = useState({ calories: "", protein: "", carbs: "", fat: "" });
+  const [bodyStats, setBodyStats] = useState({ weight: "230", height: "6'3\"" });
+  const [peptides, setPeptides] = useState([
+    { name: "Retatrutide", amount: "12mg bottle" },
+    { name: "BPC-157 / Ipamorelin stack", amount: "" },
+    { name: "Tesamorelin", amount: "" },
+  ]);
   const [foodLog, setFoodLog] = useState({});
-  const [foodDraft, setFoodDraft] = useState({ item: "", calories: "", protein: "", carbs: "", fat: "" });
-  const [peptideLog, setPeptideLog] = useState({});
-  const [peptideDraft, setPeptideDraft] = useState({ name: "", dose: "", note: "" });
+  const [foodDraft, setFoodDraft] = useState({ item: "", calories: "" });
   const [draft, setDraft] = useState("");
-  const [view, setView] = useState("today");
+  const [view, setView] = useState("daily log");
   const [saveState, setSaveState] = useState("idle");
 
   useEffect(() => {
@@ -119,16 +239,16 @@ export default function MarshallHub() {
         if (h) setHealth(JSON.parse(h.value));
       } catch (err) {}
       try {
-        const mg = await window.storage.get("health:macroGoals");
-        if (mg) setMacroGoals(JSON.parse(mg.value));
+        const bs = await window.storage.get("health:bodyStats");
+        if (bs) setBodyStats(JSON.parse(bs.value));
+      } catch (err) {}
+      try {
+        const pep = await window.storage.get("health:peptides");
+        if (pep) setPeptides(JSON.parse(pep.value));
       } catch (err) {}
       try {
         const fl = await window.storage.get("health:foodLog");
         if (fl) setFoodLog(JSON.parse(fl.value));
-      } catch (err) {}
-      try {
-        const pl = await window.storage.get("health:peptideLog");
-        if (pl) setPeptideLog(JSON.parse(pl.value));
       } catch (err) {}
 
       if (Object.keys(loadedEntries).length === 0) {
@@ -214,6 +334,13 @@ export default function MarshallHub() {
     try {
       await window.storage.set("health:logs", JSON.stringify(next));
     } catch (err) {}
+    if (healthDraft.weight.trim()) {
+      const nextStats = { ...bodyStats, weight: healthDraft.weight.trim() };
+      setBodyStats(nextStats);
+      try {
+        await window.storage.set("health:bodyStats", JSON.stringify(nextStats));
+      } catch (err) {}
+    }
     setHealthDraft({ weight: "", note: "" });
   };
 
@@ -234,29 +361,43 @@ export default function MarshallHub() {
     return streak;
   })();
 
-  const saveMacroGoals = async (next) => {
-    setMacroGoals(next);
+  const saveBodyStats = async (next) => {
+    setBodyStats(next);
     try {
-      await window.storage.set("health:macroGoals", JSON.stringify(next));
+      await window.storage.set("health:bodyStats", JSON.stringify(next));
     } catch (err) {}
+  };
+
+  const savePeptides = async (next) => {
+    setPeptides(next);
+    try {
+      await window.storage.set("health:peptides", JSON.stringify(next));
+    } catch (err) {}
+  };
+
+  const updatePeptide = (idx, field, value) => {
+    const next = peptides.map((p, i) => (i === idx ? { ...p, [field]: value } : p));
+    savePeptides(next);
+  };
+
+  const addPeptide = () => {
+    savePeptides([...peptides, { name: "", amount: "" }]);
+  };
+
+  const removePeptide = (idx) => {
+    savePeptides(peptides.filter((_, i) => i !== idx));
   };
 
   const addFoodItem = async () => {
     if (!foodDraft.item.trim()) return;
     const key = todayKey();
-    const entry = {
-      item: foodDraft.item.trim(),
-      calories: Number(foodDraft.calories) || 0,
-      protein: Number(foodDraft.protein) || 0,
-      carbs: Number(foodDraft.carbs) || 0,
-      fat: Number(foodDraft.fat) || 0,
-    };
+    const entry = { item: foodDraft.item.trim(), calories: Number(foodDraft.calories) || 0 };
     const next = { ...foodLog, [key]: [...(foodLog[key] || []), entry] };
     setFoodLog(next);
     try {
       await window.storage.set("health:foodLog", JSON.stringify(next));
     } catch (err) {}
-    setFoodDraft({ item: "", calories: "", protein: "", carbs: "", fat: "" });
+    setFoodDraft({ item: "", calories: "" });
   };
 
   const removeFoodItem = async (idx) => {
@@ -269,45 +410,7 @@ export default function MarshallHub() {
   };
 
   const todayFood = foodLog[todayKey()] || [];
-  const foodTotals = todayFood.reduce(
-    (acc, f) => ({
-      calories: acc.calories + f.calories,
-      protein: acc.protein + f.protein,
-      carbs: acc.carbs + f.carbs,
-      fat: acc.fat + f.fat,
-    }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
-  );
-
-  const addPeptideDose = async () => {
-    if (!peptideDraft.name.trim()) return;
-    const key = todayKey();
-    const now = new Date();
-    const time = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-    const entry = {
-      name: peptideDraft.name.trim(),
-      dose: peptideDraft.dose.trim(),
-      note: peptideDraft.note.trim(),
-      time,
-    };
-    const next = { ...peptideLog, [key]: [...(peptideLog[key] || []), entry] };
-    setPeptideLog(next);
-    try {
-      await window.storage.set("health:peptideLog", JSON.stringify(next));
-    } catch (err) {}
-    setPeptideDraft({ name: "", dose: "", note: "" });
-  };
-
-  const removePeptideDose = async (idx) => {
-    const key = todayKey();
-    const next = { ...peptideLog, [key]: (peptideLog[key] || []).filter((_, i) => i !== idx) };
-    setPeptideLog(next);
-    try {
-      await window.storage.set("health:peptideLog", JSON.stringify(next));
-    } catch (err) {}
-  };
-
-  const todayPeptides = peptideLog[todayKey()] || [];
+  const todayCalories = todayFood.reduce((sum, f) => sum + f.calories, 0);
 
   const entryDates = Object.keys(entries).sort().reverse();
   const historyDates = Array.from(new Set([...Object.keys(entries), ...Object.keys(dailyLog)])).sort().reverse();
@@ -326,6 +429,44 @@ export default function MarshallHub() {
       </div>
     );
   }
+
+  const inputStyle = {
+    width: "100%",
+    background: "#05070B",
+    border: "1px solid #182430",
+    borderRadius: 8,
+    color: "#E7EDF4",
+    padding: 10,
+    fontSize: 14,
+  };
+
+  const cardStyle = {
+    background: "#0B131C",
+    border: "1px solid #182430",
+    borderRadius: 14,
+    padding: 18,
+    marginBottom: 16,
+  };
+
+  const labelStyle = {
+    fontSize: 10,
+    color: "#7C8CA0",
+    letterSpacing: "0.12em",
+    marginBottom: 10,
+    fontFamily: "'JetBrains Mono', monospace",
+    textTransform: "uppercase",
+  };
+
+  const primaryBtn = {
+    background: "#5FE8D5",
+    color: "#05070B",
+    border: "none",
+    borderRadius: 8,
+    padding: "9px 18px",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  };
 
   return (
     <div
@@ -382,12 +523,11 @@ export default function MarshallHub() {
       `}</style>
 
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.25em", color: "#5FE8D5", marginBottom: 4 }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.25em", color: "#5FE8D5", marginBottom: 14 }}>
           MARSHALL // HUB
         </div>
-        <h1 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 18px" }}>
-          {view === "daily tasks" ? "Ecosystem Rollout" : "Daily Log"}
-        </h1>
+
+        <TodayWidget />
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
@@ -399,8 +539,8 @@ export default function MarshallHub() {
                 background: view === v ? "#5FE8D5" : "#0B131C",
                 color: view === v ? "#05070B" : "#7C8CA0",
                 border: "1px solid " + (view === v ? "#5FE8D5" : "#182430"),
-                borderRadius: 6,
-                padding: "6px 14px",
+                borderRadius: 8,
+                padding: "7px 14px",
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: "pointer",
@@ -412,8 +552,8 @@ export default function MarshallHub() {
           ))}
         </div>
 
-        {view === "today" && (
-          <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16 }}>
+        {view === "daily log" && (
+          <div style={cardStyle}>
             <div style={{ fontSize: 12, color: "#7C8CA0", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
               {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
             </div>
@@ -422,34 +562,13 @@ export default function MarshallHub() {
               onChange={(e) => setDraft(e.target.value)}
               placeholder="What's going on today? Wins, tasks, how you're feeling..."
               rows={6}
-              style={{
-                width: "100%",
-                background: "#05070B",
-                border: "1px solid #182430",
-                borderRadius: 8,
-                color: "#E7EDF4",
-                padding: 12,
-                fontSize: 14,
-                resize: "vertical",
-              }}
+              style={{ ...inputStyle, resize: "vertical", padding: 12 }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
               <span style={{ fontSize: 11, color: "#7C8CA0" }}>
                 {saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : ""}
               </span>
-              <button
-                onClick={saveEntry}
-                style={{
-                  background: "#5FE8D5",
-                  color: "#05070B",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 18px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={saveEntry} style={primaryBtn}>
                 Save entry
               </button>
             </div>
@@ -458,189 +577,117 @@ export default function MarshallHub() {
 
         {view === "health" && (
           <div>
-            <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-              <div style={{ flex: 1, background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 14, textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "#5FE8D5" }}>{healthStreak}</div>
-                <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
-                  DAY STREAK
+            {/* Body stats */}
+            <div style={labelStyle}>BODY STATS</div>
+            <div style={cardStyle}>
+              <div style={{ display: "flex", gap: 20, marginBottom: 4 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: "#7C8CA0", marginBottom: 4 }}>Weight</div>
+                  <input
+                    value={bodyStats.weight}
+                    onChange={(e) => saveBodyStats({ ...bodyStats, weight: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: "#7C8CA0", marginBottom: 4 }}>Height</div>
+                  <input
+                    value={bodyStats.height}
+                    onChange={(e) => saveBodyStats({ ...bodyStats, height: e.target.value })}
+                    style={inputStyle}
+                  />
                 </div>
               </div>
-              <div style={{ flex: 1, background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 14, textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "#5FE8D5" }}>
-                  {health[todayKey()] && health[todayKey()].weight ? health[todayKey()].weight : "—"}
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <div style={{ flex: 1, background: "#05070B", borderRadius: 10, padding: 12, textAlign: "center" }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: "#5FE8D5" }}>{healthStreak}</div>
+                  <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.08em" }}>DAY STREAK</div>
                 </div>
-                <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
-                  TODAY'S WEIGHT
+                <div style={{ flex: 1, background: "#05070B", borderRadius: 10, padding: 12, textAlign: "center" }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: "#5FE8D5" }}>{todayCalories || "—"}</div>
+                  <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.08em" }}>CAL TODAY</div>
                 </div>
               </div>
             </div>
 
-            <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16, marginBottom: 14 }}>
-              <div style={{ fontSize: 12, color: "#7C8CA0", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-                {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
-              </div>
-              <input
-                type="number"
-                value={healthDraft.weight}
-                onChange={(e) => setHealthDraft({ ...healthDraft, weight: e.target.value })}
-                placeholder="Weight (optional)"
-                style={{
-                  width: "100%",
-                  background: "#05070B",
-                  border: "1px solid #182430",
-                  borderRadius: 8,
-                  color: "#E7EDF4",
-                  padding: 10,
-                  fontSize: 14,
-                  marginBottom: 10,
-                }}
-              />
+            {/* Daily check-in */}
+            <div style={labelStyle}>DAILY CHECK-IN</div>
+            <div style={cardStyle}>
               <textarea
                 value={healthDraft.note}
                 onChange={(e) => setHealthDraft({ ...healthDraft, note: e.target.value })}
                 placeholder="Workout, habits, how the body feels..."
-                rows={4}
-                style={{
-                  width: "100%",
-                  background: "#05070B",
-                  border: "1px solid #182430",
-                  borderRadius: 8,
-                  color: "#E7EDF4",
-                  padding: 12,
-                  fontSize: 14,
-                  resize: "vertical",
-                }}
+                rows={3}
+                style={{ ...inputStyle, resize: "vertical", marginBottom: 10 }}
               />
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-                <button
-                  onClick={saveHealth}
-                  style={{
-                    background: "#5FE8D5",
-                    color: "#05070B",
-                    border: "none",
-                    borderRadius: 6,
-                    padding: "8px 18px",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  Log today
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <input
+                  type="number"
+                  value={healthDraft.weight}
+                  onChange={(e) => setHealthDraft({ ...healthDraft, weight: e.target.value })}
+                  placeholder="Weight"
+                  style={{ ...inputStyle, width: 100 }}
+                />
+                <button onClick={saveHealth} style={primaryBtn}>
+                  Log
                 </button>
               </div>
             </div>
 
-            {healthDates.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-                  PAST LOGS
+            {/* Peptide inventory */}
+            <div style={labelStyle}>PEPTIDE INVENTORY</div>
+            <div style={cardStyle}>
+              {peptides.map((p, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+                  <input
+                    value={p.name}
+                    onChange={(e) => updatePeptide(i, "name", e.target.value)}
+                    placeholder="Name"
+                    style={{ ...inputStyle, flex: 2 }}
+                  />
+                  <input
+                    value={p.amount}
+                    onChange={(e) => updatePeptide(i, "amount", e.target.value)}
+                    placeholder="Amount"
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button
+                    onClick={() => removePeptide(i)}
+                    style={{ background: "none", border: "none", color: "#4A5A68", cursor: "pointer", fontSize: 18 }}
+                  >
+                    ×
+                  </button>
                 </div>
-                {healthDates.map((d) => (
-                  <div key={d} style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 8, padding: 12, marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, color: "#5FE8D5", fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>
-                      {new Date(d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-                      {health[d].weight ? ` · ${health[d].weight}` : ""}
-                    </div>
-                    {health[d].note && (
-                      <div style={{ fontSize: 13, color: "#C7D2DC" }}>{health[d].note}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Macro goals */}
-            <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-              DAILY MACRO GOALS
-            </div>
-            <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16, marginBottom: 20 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-                {[
-                  { key: "calories", label: "Calories" },
-                  { key: "protein", label: "Protein (g)" },
-                  { key: "carbs", label: "Carbs (g)" },
-                  { key: "fat", label: "Fat (g)" },
-                ].map((f) => (
-                  <div key={f.key}>
-                    <div style={{ fontSize: 11, color: "#7C8CA0", marginBottom: 4 }}>{f.label}</div>
-                    <input
-                      type="number"
-                      value={macroGoals[f.key]}
-                      onChange={(e) => saveMacroGoals({ ...macroGoals, [f.key]: e.target.value })}
-                      placeholder="Set goal"
-                      style={{
-                        width: "100%",
-                        background: "#05070B",
-                        border: "1px solid #182430",
-                        borderRadius: 6,
-                        color: "#E7EDF4",
-                        padding: 8,
-                        fontSize: 13,
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-              {macroGoals.calories && (
-                <div style={{ fontSize: 12, color: "#8FE0D3", marginTop: 4 }}>
-                  Today: {foodTotals.calories} / {macroGoals.calories} cal · {foodTotals.protein}
-                  {macroGoals.protein ? `/${macroGoals.protein}` : ""}g protein
-                </div>
-              )}
+              ))}
+              <button
+                onClick={addPeptide}
+                style={{ ...primaryBtn, background: "#182430", color: "#8FE0D3", marginTop: 4 }}
+              >
+                + Add
+              </button>
             </div>
 
             {/* Food log */}
-            <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-              FOOD LOG — TODAY
-            </div>
-            <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16, marginBottom: 20 }}>
-              <input
-                value={foodDraft.item}
-                onChange={(e) => setFoodDraft({ ...foodDraft, item: e.target.value })}
-                placeholder="Food item"
-                style={{
-                  width: "100%",
-                  background: "#05070B",
-                  border: "1px solid #182430",
-                  borderRadius: 6,
-                  color: "#E7EDF4",
-                  padding: 8,
-                  fontSize: 13,
-                  marginBottom: 8,
-                }}
-              />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 10 }}>
-                {["calories", "protein", "carbs", "fat"].map((f) => (
-                  <input
-                    key={f}
-                    type="number"
-                    value={foodDraft[f]}
-                    onChange={(e) => setFoodDraft({ ...foodDraft, [f]: e.target.value })}
-                    placeholder={f === "calories" ? "cal" : f[0] + "g"}
-                    style={{
-                      background: "#05070B",
-                      border: "1px solid #182430",
-                      borderRadius: 6,
-                      color: "#E7EDF4",
-                      padding: 8,
-                      fontSize: 12,
-                    }}
-                  />
-                ))}
+            <div style={labelStyle}>FOOD LOG — TODAY</div>
+            <div style={cardStyle}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                <input
+                  value={foodDraft.item}
+                  onChange={(e) => setFoodDraft({ ...foodDraft, item: e.target.value })}
+                  placeholder="Food item"
+                  style={{ ...inputStyle, flex: 2 }}
+                />
+                <input
+                  type="number"
+                  value={foodDraft.calories}
+                  onChange={(e) => setFoodDraft({ ...foodDraft, calories: e.target.value })}
+                  placeholder="Cal"
+                  style={{ ...inputStyle, flex: 1 }}
+                />
               </div>
               <button
                 onClick={addFoodItem}
-                style={{
-                  background: "#5FE8D5",
-                  color: "#05070B",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 18px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  marginBottom: todayFood.length ? 12 : 0,
-                }}
+                style={{ ...primaryBtn, marginBottom: todayFood.length ? 10 : 0 }}
               >
                 Add item
               </button>
@@ -648,9 +695,7 @@ export default function MarshallHub() {
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderTop: "1px solid #182430" }}>
                   <span style={{ fontSize: 13, color: "#C7D2DC" }}>{f.item}</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 11, color: "#7C8CA0", fontFamily: "'JetBrains Mono', monospace" }}>
-                      {f.calories} cal
-                    </span>
+                    <span style={{ fontSize: 11, color: "#7C8CA0", fontFamily: "'JetBrains Mono', monospace" }}>{f.calories} cal</span>
                     <button
                       onClick={() => removeFoodItem(i)}
                       style={{ background: "none", border: "none", color: "#4A5A68", cursor: "pointer", fontSize: 15 }}
@@ -661,130 +706,6 @@ export default function MarshallHub() {
                 </div>
               ))}
             </div>
-
-            {/* Peptide log */}
-            <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-              PEPTIDE / DOSE LOG — TODAY
-            </div>
-            <div style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 10, padding: 16 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-                <input
-                  value={peptideDraft.name}
-                  onChange={(e) => setPeptideDraft({ ...peptideDraft, name: e.target.value })}
-                  placeholder="Name"
-                  style={{
-                    background: "#05070B",
-                    border: "1px solid #182430",
-                    borderRadius: 6,
-                    color: "#E7EDF4",
-                    padding: 8,
-                    fontSize: 13,
-                  }}
-                />
-                <input
-                  value={peptideDraft.dose}
-                  onChange={(e) => setPeptideDraft({ ...peptideDraft, dose: e.target.value })}
-                  placeholder="Dose"
-                  style={{
-                    background: "#05070B",
-                    border: "1px solid #182430",
-                    borderRadius: 6,
-                    color: "#E7EDF4",
-                    padding: 8,
-                    fontSize: 13,
-                  }}
-                />
-              </div>
-              <input
-                value={peptideDraft.note}
-                onChange={(e) => setPeptideDraft({ ...peptideDraft, note: e.target.value })}
-                placeholder="Note (optional)"
-                style={{
-                  width: "100%",
-                  background: "#05070B",
-                  border: "1px solid #182430",
-                  borderRadius: 6,
-                  color: "#E7EDF4",
-                  padding: 8,
-                  fontSize: 13,
-                  marginBottom: 10,
-                }}
-              />
-              <button
-                onClick={addPeptideDose}
-                style={{
-                  background: "#5FE8D5",
-                  color: "#05070B",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 18px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  marginBottom: todayPeptides.length ? 12 : 0,
-                }}
-              >
-                Log dose
-              </button>
-              {todayPeptides.map((p, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderTop: "1px solid #182430" }}>
-                  <span style={{ fontSize: 13, color: "#C7D2DC" }}>
-                    {p.name} {p.dose && `· ${p.dose}`}
-                  </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 11, color: "#7C8CA0", fontFamily: "'JetBrains Mono', monospace" }}>{p.time}</span>
-                    <button
-                      onClick={() => removePeptideDose(i)}
-                      style={{ background: "none", border: "none", color: "#4A5A68", cursor: "pointer", fontSize: 15 }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {view === "history" && (
-          <div>
-            {historyDates.length === 0 && (
-              <div style={{ fontSize: 13, color: "#4A5A68", textAlign: "center", marginTop: 20 }}>
-                No history yet — write a log or check off a task today.
-              </div>
-            )}
-            {historyDates.map((d) => {
-              const entry = entries[d];
-              const tasksDone = dailyLog[d] || [];
-              return (
-                <div key={d} style={{ background: "#0B131C", border: "1px solid #182430", borderRadius: 8, padding: 14, marginBottom: 10 }}>
-                  <div style={{ fontSize: 11, color: "#5FE8D5", fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
-                    {entry ? `Day ${entry.day} · ` : ""}
-                    {new Date(d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-                  </div>
-                  {entry && (
-                    <div style={{ fontSize: 13, color: "#C7D2DC", whiteSpace: "pre-wrap", marginBottom: tasksDone.length ? 10 : 0 }}>
-                      {entry.text}
-                    </div>
-                  )}
-                  {tasksDone.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 6, fontFamily: "'JetBrains Mono', monospace" }}>
-                        TASKS COMPLETED
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        {tasksDone.map((t) => (
-                          <div key={t.id} style={{ fontSize: 12.5, color: "#8FE0D3", display: "flex", gap: 6 }}>
-                            <span>✓</span>
-                            <span>{t.text}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
         )}
 
@@ -834,7 +755,7 @@ export default function MarshallHub() {
                       background: "linear-gradient(180deg, #0B131C 0%, #080E15 100%)",
                       border: `1px solid ${nightDone ? "#2A5A5A" : "#182430"}`,
                       borderLeft: `2px solid ${nightDone ? "#5FE8D5" : nightStarted ? "#E8A33D" : "#2A3A45"}`,
-                      borderRadius: 8,
+                      borderRadius: 12,
                       padding: "14px 16px",
                       marginBottom: 16,
                     }}
@@ -870,6 +791,48 @@ export default function MarshallHub() {
                       ))}
                     </div>
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {view === "history" && (
+          <div>
+            {historyDates.length === 0 && (
+              <div style={{ fontSize: 13, color: "#4A5A68", textAlign: "center", marginTop: 20 }}>
+                No history yet — write a log or check off a task today.
+              </div>
+            )}
+            {historyDates.map((d) => {
+              const entry = entries[d];
+              const tasksDone = dailyLog[d] || [];
+              return (
+                <div key={d} style={{ ...cardStyle, padding: 14 }}>
+                  <div style={{ fontSize: 11, color: "#5FE8D5", fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
+                    {entry ? `Day ${entry.day} · ` : ""}
+                    {new Date(d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                  </div>
+                  {entry && (
+                    <div style={{ fontSize: 13, color: "#C7D2DC", whiteSpace: "pre-wrap", marginBottom: tasksDone.length ? 10 : 0 }}>
+                      {entry.text}
+                    </div>
+                  )}
+                  {tasksDone.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 10, color: "#7C8CA0", letterSpacing: "0.1em", marginBottom: 6, fontFamily: "'JetBrains Mono', monospace" }}>
+                        TASKS COMPLETED
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        {tasksDone.map((t) => (
+                          <div key={t.id} style={{ fontSize: 12.5, color: "#8FE0D3", display: "flex", gap: 6 }}>
+                            <span>✓</span>
+                            <span>{t.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
