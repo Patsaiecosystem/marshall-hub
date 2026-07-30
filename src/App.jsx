@@ -82,7 +82,7 @@ const PLAN = [
   },
 ];
 
-const TABS = ["dashboard", "daily log", "daily tasks", "health", "history"];
+const TABS = ["daily log", "daily tasks", "health", "history"];
 
 const WORKOUT_PLAN = [
   {
@@ -352,6 +352,130 @@ function HologramBody() {
 }
 
 
+function Lobby({ onEnter }) {
+  const buildings = [
+    { x: 0, w: 30, h: 90 }, { x: 32, w: 22, h: 140 }, { x: 56, w: 28, h: 110 },
+    { x: 86, w: 20, h: 170 }, { x: 108, w: 34, h: 130 }, { x: 144, w: 24, h: 200 },
+    { x: 170, w: 30, h: 150 }, { x: 202, w: 22, h: 115 }, { x: 226, w: 32, h: 175 },
+    { x: 260, w: 24, h: 135 }, { x: 286, w: 28, h: 95 }, { x: 316, w: 20, h: 160 },
+    { x: 338, w: 26, h: 120 },
+  ];
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(180deg, #050505 0%, #0A0A0A 60%, #08070A 100%)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "40px 20px 30px",
+        boxSizing: "border-box",
+        fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        @keyframes windowTwinkle {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
+        }
+      `}</style>
+
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.3em", color: "#7A7A80" }}>
+          THE
+        </div>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 46, fontWeight: 600, color: "#F5F3EC", letterSpacing: "0.04em", marginTop: 2 }}>
+          MARSHALL
+        </div>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.35em", color: "#D4AF37", marginTop: 4 }}>
+          PRIVATE OFFICE
+        </div>
+      </div>
+
+      {/* Window with skyline view */}
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: 420,
+          height: 240,
+          border: "1px solid #2E2A1C",
+          borderRadius: 4,
+          overflow: "hidden",
+          background: "linear-gradient(180deg, #0A1420 0%, #050505 100%)",
+        }}
+      >
+        <svg width="100%" height="100%" viewBox="0 0 362 200" preserveAspectRatio="xMidYMax slice">
+          {buildings.map((b, i) => (
+            <g key={i}>
+              <rect x={b.x} y={200 - b.h} width={b.w} height={b.h} fill="#101012" stroke="#221E14" strokeWidth="0.5" />
+              {Array.from({ length: Math.floor(b.h / 16) }).map((_, r) =>
+                Array.from({ length: Math.max(1, Math.floor(b.w / 9)) }).map((_, c) => {
+                  const lit = (i * 7 + r * 3 + c) % 4 === 0;
+                  return lit ? (
+                    <rect
+                      key={r + "-" + c}
+                      x={b.x + 3 + c * 8}
+                      y={200 - b.h + 6 + r * 16}
+                      width={3.5}
+                      height={5}
+                      fill="#D4AF37"
+                      style={{ animation: `windowTwinkle ${3 + ((r + c) % 4)}s ease-in-out infinite`, animationDelay: `${(r + c) * 0.2}s` }}
+                    />
+                  ) : null;
+                })
+              )}
+            </g>
+          ))}
+        </svg>
+        {/* window mullions */}
+        <div style={{ position: "absolute", inset: 0, border: "10px solid #08070A", boxSizing: "border-box", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, background: "#08070A" }} />
+      </div>
+
+      {/* Reception desk */}
+      <div style={{ width: "100%", maxWidth: 420, marginTop: -18, position: "relative", zIndex: 2 }}>
+        <div
+          style={{
+            height: 46,
+            background: "linear-gradient(180deg, #1A1710 0%, #0A0A0A 100%)",
+            border: "1px solid #4A4A2E",
+            borderTop: "2px solid #D4AF37",
+            borderRadius: "6px 6px 2px 2px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "#9A9AA2" }}>
+            RECEPTION
+          </span>
+        </div>
+      </div>
+
+      <button
+        onClick={onEnter}
+        style={{
+          marginTop: 26,
+          background: "#D4AF37",
+          color: "#0A0A0A",
+          border: "none",
+          borderRadius: 8,
+          padding: "13px 34px",
+          fontSize: 14,
+          fontWeight: 700,
+          letterSpacing: "0.04em",
+          cursor: "pointer",
+        }}
+      >
+        Enter Office
+      </button>
+    </div>
+  );
+}
+
 export default function MarshallHub() {
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState({});
@@ -377,6 +501,7 @@ export default function MarshallHub() {
   const [exerciseChecks, setExerciseChecks] = useState({});
   const [draft, setDraft] = useState("");
   const [view, setView] = useState("daily log");
+  const [entered, setEntered] = useState(false);
   const [saveState, setSaveState] = useState("idle");
 
   useEffect(() => {
@@ -588,6 +713,10 @@ export default function MarshallHub() {
     );
   }
 
+  if (!entered) {
+    return <Lobby onEnter={() => setEntered(true)} />;
+  }
+
   const inputStyle = {
     width: "100%",
     background: "#0A0A0A",
@@ -687,163 +816,54 @@ export default function MarshallHub() {
 
         <TodayWidget />
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
+        {/* Office corridor — doors */}
+        <div style={{ fontSize: 10, color: "#5C5C62", letterSpacing: "0.2em", marginBottom: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+          — CORRIDOR —
+        </div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 22, overflowX: "auto", paddingBottom: 4 }}>
           {TABS.map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
               style={{
-                background: view === v ? "#D4AF37" : "#111113",
-                color: view === v ? "#0A0A0A" : "#9A9AA2",
+                background: view === v ? "linear-gradient(180deg, #1A1710 0%, #0A0A0A 100%)" : "linear-gradient(180deg, #111113 0%, #0A0A0A 100%)",
                 border: "1px solid " + (view === v ? "#D4AF37" : "#2A2A2E"),
-                borderRadius: 8,
-                padding: "7px 14px",
-                fontSize: 13,
-                fontWeight: 500,
+                borderTop: `2px solid ${view === v ? "#D4AF37" : "#3A3A3E"}`,
+                borderRadius: "3px 3px 1px 1px",
+                padding: "14px 16px 10px",
+                minWidth: 78,
                 cursor: "pointer",
-                textTransform: "capitalize",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 8,
+                flexShrink: 0,
               }}
             >
-              {v}
+              <div
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: view === v ? "#D4AF37" : "#4A4A50",
+                  boxShadow: view === v ? "0 0 5px 1px rgba(212,175,55,0.6)" : "none",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: "0.04em",
+                  color: view === v ? "#D4AF37" : "#9A9AA2",
+                  textTransform: "capitalize",
+                  textAlign: "center",
+                }}
+              >
+                {v}
+              </span>
             </button>
           ))}
         </div>
-
-        {view === "dashboard" && (
-          <div>
-            {(() => {
-              const journalActive = entries[todayKey()] && entries[todayKey()].items.length > 0;
-              const healthActive = health[todayKey()] && health[todayKey()].length > 0;
-              const tasksActive = dailyLog[todayKey()] && dailyLog[todayKey()].length > 0;
-
-              const buildings = [
-                { id: "daily log", label: "Journal", active: journalActive, height: 100, left: "12%" },
-                { id: "health", label: "Health", active: healthActive, height: 130, left: "34%" },
-                { id: "daily tasks", label: "Tasks", active: tasksActive, height: 85, left: "84%", extra: `${pct}%` },
-              ];
-
-              return (
-                <div>
-                  <div style={{ ...cardStyle, position: "relative", overflow: "hidden", paddingBottom: 14 }}>
-                    <div style={{ fontSize: 11, color: "#9A9AA2", letterSpacing: "0.1em", marginBottom: 20, fontFamily: "'JetBrains Mono', monospace" }}>
-                      ECOSYSTEM // LIVE
-                    </div>
-
-                    <div style={{ position: "relative", height: 210 }}>
-                      {/* connecting wires */}
-                      <svg width="100%" height="100%" viewBox="0 0 300 210" preserveAspectRatio="none" style={{ position: "absolute", inset: 0 }}>
-                        {buildings.map((b) => {
-                          const xPct = parseFloat(b.left);
-                          const x = (xPct / 100) * 300;
-                          return (
-                            <line
-                              key={b.id}
-                              x1={x}
-                              y1={210 - b.height}
-                              x2="150"
-                              y2="90"
-                              stroke={b.active ? "#D4AF37" : "#2A2A2E"}
-                              strokeWidth={b.active ? 1 : 0.6}
-                              strokeDasharray="3 3"
-                            />
-                          );
-                        })}
-                      </svg>
-
-                      {/* Marshall core */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: "50%",
-                          bottom: 0,
-                          transform: "translateX(-50%)",
-                          width: 54,
-                          height: 130,
-                          background: "linear-gradient(180deg, #1A1710 0%, #0A0A0A 100%)",
-                          border: "1px solid #4A4A2E",
-                          borderTop: "2px solid #D4AF37",
-                          borderRadius: "6px 6px 2px 2px",
-                          animation: "glowPulse 2.4s ease-in-out infinite",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          paddingTop: 10,
-                          zIndex: 2,
-                        }}
-                      >
-                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#D4AF37", boxShadow: "0 0 8px 2px rgba(212,175,55,0.7)" }} />
-                        <div style={{ writingMode: "vertical-rl", fontSize: 9, letterSpacing: "0.12em", color: "#9A9AA2", marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
-                          MARSHALL
-                        </div>
-                      </div>
-
-                      {buildings.map((b) => (
-                        <div
-                          key={b.id}
-                          onClick={() => setView(b.id)}
-                          style={{
-                            position: "absolute",
-                            left: b.left,
-                            bottom: 0,
-                            transform: "translateX(-50%)",
-                            width: 52,
-                            height: b.height,
-                            background: "linear-gradient(180deg, #111113 0%, #0A0A0A 100%)",
-                            border: "1px solid #2A2A2E",
-                            borderTop: `2px solid ${b.active ? "#D4AF37" : "#3A3A3E"}`,
-                            borderRadius: "4px 4px 1px 1px",
-                            cursor: "pointer",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            paddingTop: 8,
-                            gap: 3,
-                            zIndex: 2,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: "50%",
-                              background: b.active ? "#D4AF37" : "#3A3A3E",
-                              boxShadow: b.active ? "0 0 6px 2px rgba(212,175,55,0.6)" : "none",
-                            }}
-                          />
-                        </div>
-                      ))}
-
-                      {buildings.map((b) => (
-                        <div
-                          key={b.id + "-label"}
-                          style={{
-                            position: "absolute",
-                            left: b.left,
-                            bottom: -34,
-                            transform: "translateX(-50%)",
-                            width: 62,
-                            textAlign: "center",
-                          }}
-                        >
-                          <div style={{ fontSize: 10, color: "#9A9AA2", fontFamily: "'JetBrains Mono', monospace" }}>{b.label}</div>
-                          <div style={{ fontSize: 9, color: b.active ? "#D4AF37" : "#5C5C62", marginTop: 2 }}>
-                            {b.extra ? b.extra : b.active ? "Active" : "Idle"}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ height: 34 }} />
-                  </div>
-
-                  <p style={{ fontSize: 12, color: "#5C5C62", textAlign: "center", marginTop: 14 }}>
-                    Tap a building to jump to that agent.
-                  </p>
-                </div>
-              );
-            })()}
-          </div>
-        )}
 
         {view === "daily log" && (
           <div>
