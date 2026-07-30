@@ -364,26 +364,47 @@ function Lobby({ onEnter }) {
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(180deg, #050505 0%, #0A0A0A 60%, #08070A 100%)",
+        background: "radial-gradient(ellipse at 50% 0%, #16130C 0%, #0A0806 45%, #050403 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "space-between",
-        padding: "40px 20px 30px",
+        justifyContent: "flex-start",
+        padding: "44px 20px 40px",
         boxSizing: "border-box",
         fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap');
         @keyframes windowTwinkle {
-          0%, 100% { opacity: 0.55; }
+          0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
+        }
+        @keyframes chandelierGlow {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.85; }
         }
       `}</style>
 
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.3em", color: "#7A7A80" }}>
+      {/* chandelier glow */}
+      <div
+        style={{
+          position: "absolute",
+          top: -60,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 320,
+          height: 200,
+          background: "radial-gradient(ellipse, rgba(212,175,55,0.22) 0%, transparent 70%)",
+          animation: "chandelierGlow 4s ease-in-out infinite",
+          pointerEvents: "none",
+        }}
+      />
+
+      <div style={{ textAlign: "center", position: "relative", zIndex: 2 }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.3em", color: "#8A8478" }}>
           THE
         </div>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 46, fontWeight: 600, color: "#F5F3EC", letterSpacing: "0.04em", marginTop: 2 }}>
@@ -394,62 +415,95 @@ function Lobby({ onEnter }) {
         </div>
       </div>
 
-      {/* Window with skyline view */}
+      {/* Window with skyline view, glass mullions, warm wood frame */}
       <div
         style={{
           position: "relative",
           width: "100%",
           maxWidth: 420,
-          height: 240,
-          border: "1px solid #2E2A1C",
-          borderRadius: 4,
-          overflow: "hidden",
-          background: "linear-gradient(180deg, #0A1420 0%, #050505 100%)",
+          height: 220,
+          marginTop: 34,
+          padding: 10,
+          background: "linear-gradient(180deg, #241C10 0%, #14100A 100%)",
+          border: "1px solid #4A3F26",
+          borderRadius: 6,
+          boxSizing: "border-box",
         }}
       >
-        <svg width="100%" height="100%" viewBox="0 0 362 200" preserveAspectRatio="xMidYMax slice">
-          {buildings.map((b, i) => (
-            <g key={i}>
-              <rect x={b.x} y={200 - b.h} width={b.w} height={b.h} fill="#101012" stroke="#221E14" strokeWidth="0.5" />
-              {Array.from({ length: Math.floor(b.h / 16) }).map((_, r) =>
-                Array.from({ length: Math.max(1, Math.floor(b.w / 9)) }).map((_, c) => {
-                  const lit = (i * 7 + r * 3 + c) % 4 === 0;
-                  return lit ? (
-                    <rect
-                      key={r + "-" + c}
-                      x={b.x + 3 + c * 8}
-                      y={200 - b.h + 6 + r * 16}
-                      width={3.5}
-                      height={5}
-                      fill="#D4AF37"
-                      style={{ animation: `windowTwinkle ${3 + ((r + c) % 4)}s ease-in-out infinite`, animationDelay: `${(r + c) * 0.2}s` }}
-                    />
-                  ) : null;
-                })
-              )}
-            </g>
-          ))}
-        </svg>
-        {/* window mullions */}
-        <div style={{ position: "absolute", inset: 0, border: "10px solid #08070A", boxSizing: "border-box", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, background: "#08070A" }} />
+        <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", borderRadius: 2, background: "linear-gradient(180deg, #0C1826 0%, #060504 100%)" }}>
+          <svg width="100%" height="100%" viewBox="0 0 362 200" preserveAspectRatio="xMidYMax slice">
+            {buildings.map((b, i) => (
+              <g key={i}>
+                <rect x={b.x} y={200 - b.h} width={b.w} height={b.h} fill="#101012" stroke="#221E14" strokeWidth="0.5" />
+                {Array.from({ length: Math.floor(b.h / 16) }).map((_, r) =>
+                  Array.from({ length: Math.max(1, Math.floor(b.w / 9)) }).map((_, c) => {
+                    const lit = (i * 7 + r * 3 + c) % 4 === 0;
+                    return lit ? (
+                      <rect
+                        key={r + "-" + c}
+                        x={b.x + 3 + c * 8}
+                        y={200 - b.h + 6 + r * 16}
+                        width={3.5}
+                        height={5}
+                        fill="#D4AF37"
+                        style={{ animation: `windowTwinkle ${3 + ((r + c) % 4)}s ease-in-out infinite`, animationDelay: `${(r + c) * 0.2}s` }}
+                      />
+                    ) : null;
+                  })
+                )}
+              </g>
+            ))}
+          </svg>
+          {/* window mullions */}
+          <div style={{ position: "absolute", top: 0, bottom: 0, left: "33%", width: 3, background: "#14100A" }} />
+          <div style={{ position: "absolute", top: 0, bottom: 0, left: "66%", width: 3, background: "#14100A" }} />
+          <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 3, background: "#14100A" }} />
+        </div>
       </div>
 
-      {/* Reception desk */}
-      <div style={{ width: "100%", maxWidth: 420, marginTop: -18, position: "relative", zIndex: 2 }}>
+      {/* Marble floor with reception desk */}
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: 480,
+          marginTop: 0,
+          paddingTop: 40,
+        }}
+      >
+        {/* marble floor */}
         <div
           style={{
-            height: 46,
-            background: "linear-gradient(180deg, #1A1710 0%, #0A0A0A 100%)",
-            border: "1px solid #4A4A2E",
+            position: "absolute",
+            bottom: -20,
+            left: "-10%",
+            right: "-10%",
+            height: 90,
+            background: "linear-gradient(180deg, #1C1912 0%, #0A0806 100%)",
+            transform: "perspective(300px) rotateX(55deg)",
+            transformOrigin: "top",
+            opacity: 0.6,
+          }}
+        />
+
+        {/* angled marble reception desk */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            width: "100%",
+            height: 64,
+            background: "linear-gradient(115deg, #2A2620 0%, #16140F 55%, #0A0906 100%)",
+            border: "1px solid #4A4028",
             borderTop: "2px solid #D4AF37",
-            borderRadius: "6px 6px 2px 2px",
+            clipPath: "polygon(0 100%, 3% 0, 97% 0, 100% 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            boxShadow: "0 0 30px rgba(212,175,55,0.08)",
           }}
         >
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "#9A9AA2" }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "#B8AE94" }}>
             RECEPTION
           </span>
         </div>
@@ -458,16 +512,19 @@ function Lobby({ onEnter }) {
       <button
         onClick={onEnter}
         style={{
-          marginTop: 26,
-          background: "#D4AF37",
-          color: "#0A0A0A",
+          marginTop: 34,
+          position: "relative",
+          zIndex: 2,
+          background: "linear-gradient(180deg, #E8C468 0%, #D4AF37 100%)",
+          color: "#0A0806",
           border: "none",
           borderRadius: 8,
-          padding: "13px 34px",
+          padding: "13px 36px",
           fontSize: 14,
           fontWeight: 700,
           letterSpacing: "0.04em",
           cursor: "pointer",
+          boxShadow: "0 4px 18px rgba(212,175,55,0.25)",
         }}
       >
         Enter Office
@@ -475,6 +532,7 @@ function Lobby({ onEnter }) {
     </div>
   );
 }
+
 
 export default function MarshallHub() {
   const [loading, setLoading] = useState(true);
@@ -810,8 +868,26 @@ export default function MarshallHub() {
       `}</style>
 
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.25em", color: "#D4AF37", marginBottom: 14 }}>
-          MARSHALL // HUB
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.25em", color: "#D4AF37" }}>
+            MARSHALL // HUB
+          </div>
+          <button
+            onClick={() => setEntered(false)}
+            style={{
+              background: "#111113",
+              border: "1px solid #2A2A2E",
+              color: "#9A9AA2",
+              borderRadius: 6,
+              padding: "5px 12px",
+              fontSize: 11,
+              fontFamily: "'JetBrains Mono', monospace",
+              letterSpacing: "0.05em",
+              cursor: "pointer",
+            }}
+          >
+            ← Lobby
+          </button>
         </div>
 
         <TodayWidget />
