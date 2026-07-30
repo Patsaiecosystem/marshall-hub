@@ -82,7 +82,7 @@ const PLAN = [
   },
 ];
 
-const TABS = ["daily log", "daily tasks", "health", "history"];
+const TABS = ["dashboard", "daily log", "daily tasks", "health", "history"];
 
 const WORKOUT_PLAN = [
   {
@@ -709,6 +709,127 @@ export default function MarshallHub() {
             </button>
           ))}
         </div>
+
+        {view === "dashboard" && (
+          <div>
+            {(() => {
+              const journalActive = entries[todayKey()] && entries[todayKey()].items.length > 0;
+              const healthActive = health[todayKey()] && health[todayKey()].length > 0;
+              const tasksActive = dailyLog[todayKey()] && dailyLog[todayKey()].length > 0;
+
+              const buildings = [
+                { id: "daily log", label: "Journal", active: journalActive, height: 130 },
+                { id: "health", label: "Health", active: healthActive, height: 155 },
+                { id: "daily tasks", label: "Tasks", active: tasksActive, height: 110, extra: `${pct}%` },
+              ];
+
+              return (
+                <div>
+                  <div style={{ ...cardStyle, position: "relative", overflow: "hidden", paddingBottom: 34 }}>
+                    <div style={{ fontSize: 11, color: "#9A9AA2", letterSpacing: "0.1em", marginBottom: 20, fontFamily: "'JetBrains Mono', monospace" }}>
+                      ECOSYSTEM // LIVE
+                    </div>
+
+                    <div style={{ position: "relative", height: 220, display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 22 }}>
+                      {/* connecting wires */}
+                      <svg width="100%" height="100%" viewBox="0 0 300 220" preserveAspectRatio="none" style={{ position: "absolute", inset: 0 }}>
+                        {buildings.map((b, i) => {
+                          const xPositions = [55, 150, 245];
+                          return (
+                            <line
+                              key={b.id}
+                              x1={xPositions[i]}
+                              y1={220 - b.height}
+                              x2="150"
+                              y2="90"
+                              stroke={b.active ? "#D4AF37" : "#2A2A2E"}
+                              strokeWidth={b.active ? 1 : 0.6}
+                              strokeDasharray="3 3"
+                            />
+                          );
+                        })}
+                      </svg>
+
+                      {/* Marshall core */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: "50%",
+                          bottom: 0,
+                          transform: "translateX(-50%)",
+                          width: 60,
+                          height: 130,
+                          background: "linear-gradient(180deg, #1A1710 0%, #0A0A0A 100%)",
+                          border: "1px solid #4A4A2E",
+                          borderTop: "2px solid #D4AF37",
+                          borderRadius: "6px 6px 2px 2px",
+                          animation: "glowPulse 2.4s ease-in-out infinite",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          paddingTop: 10,
+                          zIndex: 2,
+                        }}
+                      >
+                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#D4AF37", boxShadow: "0 0 8px 2px rgba(212,175,55,0.7)" }} />
+                        <div style={{ writingMode: "vertical-rl", fontSize: 9, letterSpacing: "0.12em", color: "#9A9AA2", marginTop: 8, fontFamily: "'JetBrains Mono', monospace" }}>
+                          MARSHALL
+                        </div>
+                      </div>
+
+                      {buildings.map((b) => (
+                        <div
+                          key={b.id}
+                          onClick={() => setView(b.id)}
+                          style={{
+                            width: 58,
+                            height: b.height,
+                            background: "linear-gradient(180deg, #111113 0%, #0A0A0A 100%)",
+                            border: "1px solid #2A2A2E",
+                            borderTop: `2px solid ${b.active ? "#D4AF37" : "#3A3A3E"}`,
+                            borderRadius: "4px 4px 1px 1px",
+                            cursor: "pointer",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            paddingTop: 8,
+                            gap: 3,
+                            zIndex: 2,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              background: b.active ? "#D4AF37" : "#3A3A3E",
+                              boxShadow: b.active ? "0 0 6px 2px rgba(212,175,55,0.6)" : "none",
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "center", gap: 22, marginTop: 14 }}>
+                      {buildings.map((b) => (
+                        <div key={b.id} style={{ width: 58, textAlign: "center" }}>
+                          <div style={{ fontSize: 10, color: "#9A9AA2", fontFamily: "'JetBrains Mono', monospace" }}>{b.label}</div>
+                          <div style={{ fontSize: 9, color: b.active ? "#D4AF37" : "#5C5C62", marginTop: 2 }}>
+                            {b.extra ? b.extra : b.active ? "Active" : "Idle"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: 12, color: "#5C5C62", textAlign: "center", marginTop: 14 }}>
+                    Tap a building to jump to that agent.
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {view === "daily log" && (
           <div>
