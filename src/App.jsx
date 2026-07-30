@@ -718,28 +718,29 @@ export default function MarshallHub() {
               const tasksActive = dailyLog[todayKey()] && dailyLog[todayKey()].length > 0;
 
               const buildings = [
-                { id: "daily log", label: "Journal", active: journalActive, height: 130 },
-                { id: "health", label: "Health", active: healthActive, height: 155 },
-                { id: "daily tasks", label: "Tasks", active: tasksActive, height: 110, extra: `${pct}%` },
+                { id: "daily log", label: "Journal", active: journalActive, height: 100, left: "12%" },
+                { id: "health", label: "Health", active: healthActive, height: 130, left: "34%" },
+                { id: "daily tasks", label: "Tasks", active: tasksActive, height: 85, left: "84%", extra: `${pct}%` },
               ];
 
               return (
                 <div>
-                  <div style={{ ...cardStyle, position: "relative", overflow: "hidden", paddingBottom: 34 }}>
+                  <div style={{ ...cardStyle, position: "relative", overflow: "hidden", paddingBottom: 14 }}>
                     <div style={{ fontSize: 11, color: "#9A9AA2", letterSpacing: "0.1em", marginBottom: 20, fontFamily: "'JetBrains Mono', monospace" }}>
                       ECOSYSTEM // LIVE
                     </div>
 
-                    <div style={{ position: "relative", height: 220, display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 22 }}>
+                    <div style={{ position: "relative", height: 210 }}>
                       {/* connecting wires */}
-                      <svg width="100%" height="100%" viewBox="0 0 300 220" preserveAspectRatio="none" style={{ position: "absolute", inset: 0 }}>
-                        {buildings.map((b, i) => {
-                          const xPositions = [55, 150, 245];
+                      <svg width="100%" height="100%" viewBox="0 0 300 210" preserveAspectRatio="none" style={{ position: "absolute", inset: 0 }}>
+                        {buildings.map((b) => {
+                          const xPct = parseFloat(b.left);
+                          const x = (xPct / 100) * 300;
                           return (
                             <line
                               key={b.id}
-                              x1={xPositions[i]}
-                              y1={220 - b.height}
+                              x1={x}
+                              y1={210 - b.height}
                               x2="150"
                               y2="90"
                               stroke={b.active ? "#D4AF37" : "#2A2A2E"}
@@ -757,7 +758,7 @@ export default function MarshallHub() {
                           left: "50%",
                           bottom: 0,
                           transform: "translateX(-50%)",
-                          width: 60,
+                          width: 54,
                           height: 130,
                           background: "linear-gradient(180deg, #1A1710 0%, #0A0A0A 100%)",
                           border: "1px solid #4A4A2E",
@@ -782,7 +783,11 @@ export default function MarshallHub() {
                           key={b.id}
                           onClick={() => setView(b.id)}
                           style={{
-                            width: 58,
+                            position: "absolute",
+                            left: b.left,
+                            bottom: 0,
+                            transform: "translateX(-50%)",
+                            width: 52,
                             height: b.height,
                             background: "linear-gradient(180deg, #111113 0%, #0A0A0A 100%)",
                             border: "1px solid #2A2A2E",
@@ -808,11 +813,19 @@ export default function MarshallHub() {
                           />
                         </div>
                       ))}
-                    </div>
 
-                    <div style={{ display: "flex", justifyContent: "center", gap: 22, marginTop: 14 }}>
                       {buildings.map((b) => (
-                        <div key={b.id} style={{ width: 58, textAlign: "center" }}>
+                        <div
+                          key={b.id + "-label"}
+                          style={{
+                            position: "absolute",
+                            left: b.left,
+                            bottom: -34,
+                            transform: "translateX(-50%)",
+                            width: 62,
+                            textAlign: "center",
+                          }}
+                        >
                           <div style={{ fontSize: 10, color: "#9A9AA2", fontFamily: "'JetBrains Mono', monospace" }}>{b.label}</div>
                           <div style={{ fontSize: 9, color: b.active ? "#D4AF37" : "#5C5C62", marginTop: 2 }}>
                             {b.extra ? b.extra : b.active ? "Active" : "Idle"}
@@ -820,6 +833,7 @@ export default function MarshallHub() {
                         </div>
                       ))}
                     </div>
+                    <div style={{ height: 34 }} />
                   </div>
 
                   <p style={{ fontSize: 12, color: "#5C5C62", textAlign: "center", marginTop: 14 }}>
