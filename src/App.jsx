@@ -812,32 +812,42 @@ export default function MarshallHub() {
 
         <TodayWidget />
 
-        {/* Office corridor — photo rooms */}
+        {/* Office building — cutaway room grid */}
         <div style={{ fontSize: 10, color: "#5C5C62", letterSpacing: "0.2em", marginBottom: 10, fontFamily: "'JetBrains Mono', monospace" }}>
-          — CORRIDOR —
+          — FLOOR PLAN —
         </div>
-        <div style={{ display: "flex", gap: 10, marginBottom: 22, overflowX: "auto", paddingBottom: 4 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gridTemplateRows: "1fr 1fr",
+            gap: 2,
+            marginBottom: 22,
+            border: "2px solid #4A4A2E",
+            borderRadius: 10,
+            overflow: "hidden",
+            background: "#2A2A2E",
+            aspectRatio: "1 / 1",
+          }}
+        >
           {[
             { id: "daily log", label: "Journal" },
             { id: "daily tasks", label: "Planning Room" },
-            { id: "health", label: "Health & Fitness", img: gymImg },
             { id: "history", label: "Archives" },
+            { id: "health", label: "Health & Fitness", img: gymImg },
           ].map((room) => (
             <button
               key={room.id}
               onClick={() => setView(room.id)}
               style={{
                 position: "relative",
-                width: 130,
-                height: 92,
-                flexShrink: 0,
-                borderRadius: 8,
-                overflow: "hidden",
-                cursor: "pointer",
+                border: "none",
                 padding: 0,
-                border: "1px solid " + (view === room.id ? "#D4AF37" : "#2A2A2E"),
-                borderTop: `2px solid ${view === room.id ? "#D4AF37" : "#3A3A3E"}`,
+                cursor: "pointer",
+                overflow: "hidden",
                 background: room.img ? "#0A0A0A" : "linear-gradient(180deg, #111113 0%, #0A0A0A 100%)",
+                outline: view === room.id ? "2px solid #D4AF37" : "none",
+                outlineOffset: -2,
               }}
             >
               {room.img && (
@@ -850,7 +860,7 @@ export default function MarshallHub() {
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    filter: view === room.id ? "brightness(0.85)" : "brightness(0.55)",
+                    filter: view === room.id ? "brightness(0.9)" : "brightness(0.55)",
                   }}
                 />
               )}
@@ -859,7 +869,7 @@ export default function MarshallHub() {
                   position: "absolute",
                   inset: 0,
                   background: room.img
-                    ? "linear-gradient(180deg, rgba(5,4,3,0.15) 0%, rgba(5,4,3,0.75) 100%)"
+                    ? "linear-gradient(180deg, rgba(5,4,3,0.1) 0%, rgba(5,4,3,0.8) 100%)"
                     : "none",
                 }}
               />
@@ -869,16 +879,16 @@ export default function MarshallHub() {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  padding: "6px 8px",
+                  padding: "8px 10px",
                   display: "flex",
                   alignItems: "center",
-                  gap: 5,
+                  gap: 6,
                 }}
               >
                 <div
                   style={{
-                    width: 5,
-                    height: 5,
+                    width: 6,
+                    height: 6,
                     borderRadius: "50%",
                     background: view === room.id ? "#D4AF37" : "#4A4A50",
                     boxShadow: view === room.id ? "0 0 5px 1px rgba(212,175,55,0.6)" : "none",
@@ -887,11 +897,10 @@ export default function MarshallHub() {
                 />
                 <span
                   style={{
-                    fontSize: 10.5,
+                    fontSize: 11,
                     fontFamily: "'JetBrains Mono', monospace",
                     letterSpacing: "0.02em",
                     color: view === room.id ? "#D4AF37" : "#E4E2DC",
-                    textAlign: "left",
                   }}
                 >
                   {room.label}
