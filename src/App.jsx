@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import hologramImg from "../7.6.18-FOM.jpg";
 import frontDeskImg from "../front desk.jpg";
+import gymImg from "../vecteezy_ai-generated-gym-with-many-equipments_37235161.jpg";
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
@@ -408,45 +409,6 @@ function Lobby({ onEnter, checked, toggleRoadmap }) {
             P.M. Financing LLC
           </div>
         </div>
-
-        {/* Today's tasks side panel */}
-        <div
-          style={{
-            position: "absolute",
-            top: 90,
-            right: 12,
-            bottom: 16,
-            width: 150,
-            zIndex: 2,
-            background: "rgba(10,8,6,0.72)",
-            border: "1px solid rgba(212,175,55,0.35)",
-            borderRadius: 10,
-            padding: 12,
-            overflowY: "auto",
-            backdropFilter: "blur(4px)",
-          }}
-        >
-          <div style={{ fontSize: 9, color: "#D4AF37", letterSpacing: "0.12em", fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
-            TODAY — NIGHT {currentNight.night}
-          </div>
-          <div style={{ fontSize: 11, color: "#F5F3EC", fontWeight: 600, marginBottom: 10 }}>{currentNight.title}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-            {currentNight.tasks.map((t) => (
-              <label key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 6, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  className="check-box"
-                  checked={!!checked[t.id]}
-                  onChange={() => toggleRoadmap(t.id)}
-                  style={{ marginTop: 1, flexShrink: 0 }}
-                />
-                <span style={{ fontSize: 10, lineHeight: 1.3, color: checked[t.id] ? "#6C6C70" : "#C7C4BA", textDecoration: checked[t.id] ? "line-through" : "none" }}>
-                  {t.text}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div style={{ display: "flex", justifyContent: "center", padding: "26px 20px 40px" }}>
@@ -850,51 +812,91 @@ export default function MarshallHub() {
 
         <TodayWidget />
 
-        {/* Office corridor — doors */}
+        {/* Office corridor — photo rooms */}
         <div style={{ fontSize: 10, color: "#5C5C62", letterSpacing: "0.2em", marginBottom: 10, fontFamily: "'JetBrains Mono', monospace" }}>
           — CORRIDOR —
         </div>
         <div style={{ display: "flex", gap: 10, marginBottom: 22, overflowX: "auto", paddingBottom: 4 }}>
-          {TABS.map((v) => (
+          {[
+            { id: "daily log", label: "Journal" },
+            { id: "daily tasks", label: "Planning Room" },
+            { id: "health", label: "Health & Fitness", img: gymImg },
+            { id: "history", label: "Archives" },
+          ].map((room) => (
             <button
-              key={v}
-              onClick={() => setView(v)}
+              key={room.id}
+              onClick={() => setView(room.id)}
               style={{
-                background: view === v ? "linear-gradient(180deg, #1A1710 0%, #0A0A0A 100%)" : "linear-gradient(180deg, #111113 0%, #0A0A0A 100%)",
-                border: "1px solid " + (view === v ? "#D4AF37" : "#2A2A2E"),
-                borderTop: `2px solid ${view === v ? "#D4AF37" : "#3A3A3E"}`,
-                borderRadius: "3px 3px 1px 1px",
-                padding: "14px 16px 10px",
-                minWidth: 78,
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 8,
+                position: "relative",
+                width: 130,
+                height: 92,
                 flexShrink: 0,
+                borderRadius: 8,
+                overflow: "hidden",
+                cursor: "pointer",
+                padding: 0,
+                border: "1px solid " + (view === room.id ? "#D4AF37" : "#2A2A2E"),
+                borderTop: `2px solid ${view === room.id ? "#D4AF37" : "#3A3A3E"}`,
+                background: room.img ? "#0A0A0A" : "linear-gradient(180deg, #111113 0%, #0A0A0A 100%)",
               }}
             >
+              {room.img && (
+                <img
+                  src={room.img}
+                  alt=""
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    filter: view === room.id ? "brightness(0.85)" : "brightness(0.55)",
+                  }}
+                />
+              )}
               <div
                 style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: "50%",
-                  background: view === v ? "#D4AF37" : "#4A4A50",
-                  boxShadow: view === v ? "0 0 5px 1px rgba(212,175,55,0.6)" : "none",
+                  position: "absolute",
+                  inset: 0,
+                  background: room.img
+                    ? "linear-gradient(180deg, rgba(5,4,3,0.15) 0%, rgba(5,4,3,0.75) 100%)"
+                    : "none",
                 }}
               />
-              <span
+              <div
                 style={{
-                  fontSize: 10.5,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  letterSpacing: "0.04em",
-                  color: view === v ? "#D4AF37" : "#9A9AA2",
-                  textTransform: "capitalize",
-                  textAlign: "center",
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  padding: "6px 8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
                 }}
               >
-                {v}
-              </span>
+                <div
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: view === room.id ? "#D4AF37" : "#4A4A50",
+                    boxShadow: view === room.id ? "0 0 5px 1px rgba(212,175,55,0.6)" : "none",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    letterSpacing: "0.02em",
+                    color: view === room.id ? "#D4AF37" : "#E4E2DC",
+                    textAlign: "left",
+                  }}
+                >
+                  {room.label}
+                </span>
+              </div>
             </button>
           ))}
         </div>
