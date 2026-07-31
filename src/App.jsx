@@ -860,7 +860,7 @@ export default function MarshallHub() {
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    filter: view === room.id ? "brightness(0.9)" : "brightness(0.55)",
+                    filter: view === room.id ? "brightness(1.3) contrast(1.05)" : "brightness(1.1) contrast(1.05)",
                   }}
                 />
               )}
@@ -869,7 +869,7 @@ export default function MarshallHub() {
                   position: "absolute",
                   inset: 0,
                   background: room.img
-                    ? "linear-gradient(180deg, rgba(5,4,3,0.1) 0%, rgba(5,4,3,0.8) 100%)"
+                    ? "linear-gradient(180deg, rgba(5,4,3,0) 0%, rgba(5,4,3,0.55) 100%)"
                     : "none",
                 }}
               />
