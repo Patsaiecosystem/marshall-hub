@@ -353,91 +353,121 @@ function HologramBody() {
 }
 
 
-function Lobby({ onEnter }) {
+function Lobby({ onEnter, checked, toggleRoadmap }) {
+  const currentNight = PLAN.find((n) => !n.tasks.every((t) => checked[t.id])) || PLAN[PLAN.length - 1];
+
   return (
     <div
       style={{
         minHeight: "100vh",
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "space-between",
-        boxSizing: "border-box",
+        background: "#050403",
         fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-        overflow: "hidden",
       }}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap');
       `}</style>
 
-      <img
-        src={frontDeskImg}
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          filter: "brightness(0.4) saturate(1.05) blur(28px)",
-          transform: "scale(1.15)",
-        }}
-      />
-      <img
-        src={frontDeskImg}
-        alt="Reception"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          filter: "brightness(0.75) saturate(1.15) contrast(1.05)",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(180deg, rgba(5,4,3,0.65) 0%, rgba(5,4,3,0.05) 30%, rgba(5,4,3,0.05) 65%, rgba(5,4,3,0.85) 100%)",
-        }}
-      />
+      <div style={{ position: "relative", width: "100%", height: "68vh", overflow: "hidden" }}>
+        <img
+          src={frontDeskImg}
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "brightness(0.4) saturate(1.05) blur(28px)",
+            transform: "scale(1.15)",
+          }}
+        />
+        <img
+          src={frontDeskImg}
+          alt="Reception"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            filter: "brightness(0.75) saturate(1.15) contrast(1.05)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(180deg, rgba(5,4,3,0.65) 0%, rgba(5,4,3,0.05) 30%, rgba(5,4,3,0.05) 65%, rgba(5,4,3,0.7) 100%)",
+          }}
+        />
 
-      <div style={{ textAlign: "center", position: "relative", zIndex: 2, paddingTop: 48 }}>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.3em", color: "#C9C4B8" }}>
-          THE
+        <div style={{ textAlign: "center", position: "relative", zIndex: 2, paddingTop: 36 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 600, color: "#FFFFFF", letterSpacing: "0.03em", textShadow: "0 2px 20px rgba(0,0,0,0.6)" }}>
+            P.M. Financing LLC
+          </div>
         </div>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 46, fontWeight: 600, color: "#FFFFFF", letterSpacing: "0.04em", marginTop: 2, textShadow: "0 2px 20px rgba(0,0,0,0.6)" }}>
-          MARSHALL
-        </div>
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.35em", color: "#D4AF37", marginTop: 4 }}>
-          PRIVATE OFFICE
+
+        {/* Today's tasks side panel */}
+        <div
+          style={{
+            position: "absolute",
+            top: 90,
+            right: 12,
+            bottom: 16,
+            width: 150,
+            zIndex: 2,
+            background: "rgba(10,8,6,0.72)",
+            border: "1px solid rgba(212,175,55,0.35)",
+            borderRadius: 10,
+            padding: 12,
+            overflowY: "auto",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div style={{ fontSize: 9, color: "#D4AF37", letterSpacing: "0.12em", fontFamily: "'JetBrains Mono', monospace", marginBottom: 8 }}>
+            TODAY — NIGHT {currentNight.night}
+          </div>
+          <div style={{ fontSize: 11, color: "#F5F3EC", fontWeight: 600, marginBottom: 10 }}>{currentNight.title}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {currentNight.tasks.map((t) => (
+              <label key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 6, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  className="check-box"
+                  checked={!!checked[t.id]}
+                  onChange={() => toggleRoadmap(t.id)}
+                  style={{ marginTop: 1, flexShrink: 0 }}
+                />
+                <span style={{ fontSize: 10, lineHeight: 1.3, color: checked[t.id] ? "#6C6C70" : "#C7C4BA", textDecoration: checked[t.id] ? "line-through" : "none" }}>
+                  {t.text}
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
-      <button
-        onClick={onEnter}
-        style={{
-          marginBottom: 48,
-          position: "relative",
-          zIndex: 2,
-          background: "linear-gradient(180deg, #E8C468 0%, #D4AF37 100%)",
-          color: "#0A0806",
-          border: "none",
-          borderRadius: 8,
-          padding: "14px 40px",
-          fontSize: 14,
-          fontWeight: 700,
-          letterSpacing: "0.04em",
-          cursor: "pointer",
-          boxShadow: "0 4px 24px rgba(212,175,55,0.35)",
-        }}
-      >
-        Enter Office
-      </button>
+      <div style={{ display: "flex", justifyContent: "center", padding: "26px 20px 40px" }}>
+        <button
+          onClick={onEnter}
+          style={{
+            background: "linear-gradient(180deg, #E8C468 0%, #D4AF37 100%)",
+            color: "#0A0806",
+            border: "none",
+            borderRadius: 8,
+            padding: "14px 40px",
+            fontSize: 14,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            cursor: "pointer",
+            boxShadow: "0 4px 24px rgba(212,175,55,0.35)",
+          }}
+        >
+          Enter Office
+        </button>
+      </div>
     </div>
   );
 }
@@ -512,6 +542,25 @@ export default function MarshallHub() {
       try {
         const pep = await window.storage.get("health:peptideNames");
         if (pep) setPeptideNames(JSON.parse(pep.value));
+      } catch (err) {}
+      try {
+        let progress = null;
+        const wp = await window.storage.get("health:workoutProgress");
+        if (wp) progress = JSON.parse(wp.value);
+        if (!progress) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          progress = { day: 4, date: yesterday.toISOString().slice(0, 10) };
+        }
+        const today = todayKey();
+        if (progress.date !== today) {
+          const nextDay = (progress.day % 7) + 1;
+          progress = { day: nextDay, date: today };
+        }
+        setSelectedWorkoutDay(progress.day);
+        try {
+          await window.storage.set("health:workoutProgress", JSON.stringify(progress));
+        } catch (err) {}
       } catch (err) {}
 
       if (Object.keys(loadedEntries).length === 0) {
@@ -681,7 +730,7 @@ export default function MarshallHub() {
   }
 
   if (!entered) {
-    return <Lobby onEnter={() => setEntered(true)} />;
+    return <Lobby onEnter={() => setEntered(true)} checked={checked} toggleRoadmap={toggleRoadmap} />;
   }
 
   const inputStyle = {
@@ -1020,7 +1069,10 @@ export default function MarshallHub() {
                 {WORKOUT_PLAN.map((d) => (
                   <button
                     key={d.day}
-                    onClick={() => setSelectedWorkoutDay(d.day)}
+                    onClick={() => {
+                      setSelectedWorkoutDay(d.day);
+                      window.storage.set("health:workoutProgress", JSON.stringify({ day: d.day, date: todayKey() })).catch(() => {});
+                    }}
                     style={{
                       background: selectedWorkoutDay === d.day ? "#D4AF37" : "#0A0A0A",
                       color: selectedWorkoutDay === d.day ? "#0A0A0A" : "#9A9AA2",
