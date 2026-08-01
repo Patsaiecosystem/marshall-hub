@@ -367,6 +367,7 @@ function Lobby({ onEnter, checked, toggleRoadmap }) {
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        button { -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
       `}</style>
 
       <div style={{ position: "relative", width: "100%", height: "68vh", overflow: "hidden" }}>
@@ -748,6 +749,7 @@ export default function MarshallHub() {
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
         * { box-sizing: border-box; }
         textarea, input { font-family: inherit; }
+        button { -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
         textarea:focus, input:focus { outline: 1px solid #D4AF37; }
         @keyframes glowPulse {
           0%, 100% { box-shadow: 0 0 12px 1px rgba(95,232,213,0.35); }
@@ -832,8 +834,8 @@ export default function MarshallHub() {
         >
           {[
             { id: "daily log", label: "Journal" },
-            { id: "daily tasks", label: "Planning Room" },
-            { id: "history", label: "Archives" },
+            { id: "daily tasks", label: "Daily Tasks" },
+            { id: "history", label: "History Log" },
             { id: "health", label: "Health & Fitness", img: gymImg },
           ].map((room) => (
             <button
@@ -842,9 +844,14 @@ export default function MarshallHub() {
               style={{
                 position: "relative",
                 border: "none",
+                margin: 0,
                 padding: 0,
                 cursor: "pointer",
                 overflow: "hidden",
+                display: "block",
+                WebkitAppearance: "none",
+                appearance: "none",
+                WebkitTapHighlightColor: "transparent",
                 background: room.img ? "#0A0A0A" : "linear-gradient(180deg, #111113 0%, #0A0A0A 100%)",
                 outline: view === room.id ? "2px solid #D4AF37" : "none",
                 outlineOffset: -2,
